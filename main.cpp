@@ -8,15 +8,6 @@ using namespace std;
 
 int main()
 {
-    /*
-        std::random_device rd;
-    std::uniform_int_distribution<int> dist(0, 9);
-
-    for(int seq=0; seq<50;seq++)
-        cout << dist(rd)<<endl;
-    exit(-1);
-    */
-
     int dif, width=30, height=24, num_mines=200;
     cout<<"DIFFICULTY: \n 1 = Beginner (9x9 - 10 Mines)  \n 2 = Medium (16x16 - 40 Mines) \n 3 = Difficult (30x16 - 99 Mines) \n 4 = Custom (max: 30x24 - 200 Mines) \n";
     cin>>dif;
