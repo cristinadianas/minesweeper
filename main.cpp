@@ -36,21 +36,16 @@ int main()
     cout<<endl;
     break;
 }
-    int v[32][32], i, j, k=0;
+    int v[32][32]={0}, i, j, k=0;
     srand (time(NULL));
 
-    for (i=0; i<height+2; i++)
-        for (j=0; j<width+2; j++)
-        if (i==0 || j==0 || i==height+1 || j==width+1) v[i][j]=0;
-        else
-           if (num_mines-k==0) v[i][j]=0;
-           else
-               if (rand()<(RAND_MAX*(num_mines-k)/(height*width-((i-1)*width+j))))
+    for (i=1; i<=height; i++)
+        for (j=0; j<=width; j++)
+               if (num_mines-k!=0 && rand()<(RAND_MAX*(num_mines-k)/(height*width-((i-1)*width+j))))
                {
                    v[i][j]=-1;
                    k++;
                }
-               else v[i][j]=0;
 
     for (i=1; i<=height; i++)
     {
@@ -66,8 +61,6 @@ int main()
             }
         cout<<endl;
     }
-
-    cout<<endl<<k<<endl;
 
     return 0;
 }
