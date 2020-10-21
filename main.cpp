@@ -119,6 +119,7 @@ void UDRL (int ch, int &starty, int &startx, int color)
 void show_in_win(int y, int x, char ch)
 {
     mvwaddch(winindex[y][x], cell_height/2, cell_width/2, ch);
+    wmove(winindex[y][x], cell_height/2, cell_width/2);
     wrefresh(winindex[y][x]);
 }
 
