@@ -168,8 +168,14 @@ int main()
 
     move_cursor(0, 0); x=0; y=0;
     start_color();
+    short COLOR_MARKEDCELL = COLOR_YELLOW;
+    if (can_change_color() == TRUE)
+    {
+        COLOR_MARKEDCELL = 8;
+        init_color(COLOR_MARKEDCELL, 1000, 345, 0); //Orange
+    }
+    init_pair(1, COLOR_MARKEDCELL, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
-    init_pair(1, COLOR_RED, COLOR_BLACK);
     while (1)
     {
         int ch;
