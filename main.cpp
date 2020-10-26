@@ -12,6 +12,12 @@ unsigned int board_rows, board_cols, total_mines;
 #define cell_height 3
 WINDOW *winindex[30][30];
 
+bool valid_cell(int y, int x)
+{
+    if (y >= 0 && y < board_rows && x >= 0 && x < board_cols)
+        return TRUE;
+    return FALSE;
+}
 void num_neighbours (int v[][30], int y, int x)
 {
     if (v[y-1][x-1]!=-1) v[y-1][x-1]++;
@@ -122,11 +128,66 @@ void show_in_win(int y, int x, char ch)
     wmove(winindex[y][x], cell_height/2, cell_width/2);
     wrefresh(winindex[y][x]);
 }
+void ZERO_PRESSED (int row, int col, int board_mines[][30], int stepped[][30])
+{
+    stepped[row][col] = TRUE;
+    wbkgd(winindex[row][col], COLOR_PAIR(3));
+    wrefresh(winindex[row][col]);
+    for (int y = row - 1; y <= row + 1; y++)
+        for (int x = col - 1; x <= col + 1; x++)
+            if (valid_cell(y, x) == TRUE && stepped[y][x] == FALSE)
+                if (board_mines[y][x] == 0)
+                    ZERO_PRESSED(y, x, board_mines, stepped);
+                else
+                {
+                    stepped[y][x] = TRUE;
+                    wbkgd(winindex[y][x], COLOR_PAIR(2));
+                    wrefresh(winindex[y][x]);
+                    show_in_win(y, x, '0' + board_mines[y][x]);
+                }
+    move_cursor(row, col);
+}
+void exZER0_PRESSED (int stepped[][30], int board_mines[][30], int y, int x)
+{
+//    stepped[y][x] = 1;
+//    wbkgd(winindex[y][x], COLOR_PAIR(3));
+//    wrefresh(winindex[y][x]);
+//    int a=0, b=0;
+//    bool repeat = 1;
+//    while (repeat == 1)
+//    {
+//        repeat = 0;
+//        for (a = 0; a < board_rows; a++)
+//            for (b = 0; b < board_cols; b++)
+//                if (stepped[a][b] == 0)
+//                for (int i = a - 1; i <= a + 1; i++)
+//                    for (int j = b - 1; j <= b + 1; j++)
+//                    if (board_mines[i][j] == 0 && stepped[i][j] == 1 && i!=-1 && j!=-1 && i!=board_rows && j!= board_cols)
+//                    {
+//                        if (board_mines[a][b] == 0)
+//                        {
+//                            wbkgd(winindex[a][b], COLOR_PAIR(3));
+//                            wrefresh(winindex[a][b]);
+//                        }
+//                        else
+//                        {
+//                            show_in_win(a, b, '0' + board_mines[a][b]);
+//                            wbkgd(winindex[a][b], COLOR_PAIR(2));
+//                            wrefresh(winindex[a][b]);
+//                        }
+//                        wrefresh(winindex[a][b]);
+//                        stepped[a][b] = 1;
+//                        repeat = 1;
+//                    }
+//    }
+//    move_cursor(y, x);
+}
 
 int main()
 {	WINDOW *my_win;
     bsetup();
-    int board_mines[30][30] = {0}, y, x, laid_mines = 0;
+    int board_mines[30][30] = {0}, stepped[30][30]={0};
+    int y, x, laid_mines = 0;
     srand (time(NULL));
 
     for (y=0; y < board_rows; y++)
@@ -176,18 +237,21 @@ int main()
     }
     init_pair(1, COLOR_MARKEDCELL, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
+    init_pair(3, COLOR_BLACK, COLOR_BLACK);
+
     while (1)
     {
         int ch;
         while ((ch = getch()) != 'q' && ch != ' ' && ch != 'x')
             UDRL(ch, y, x, 2);
-        if (ch == ' ' && board_mines[y][x] != -1)
-        {
-            if (board_mines[y][x] != 0)
+        if (ch == ' ' && board_mines[y][x] != -1 && board_mines[y][x] != 0)
+            {
                 wbkgd(winindex[y][x], COLOR_PAIR(2));
-            wrefresh(winindex[y][x]);
-            show_in_win(y, x, '0' + board_mines[y][x]);
-        }
+                wrefresh(winindex[y][x]);
+                show_in_win(y, x, '0' + board_mines[y][x]);
+            }
+        else if (ch == ' ' && board_mines[y][x] == 0)
+            ZERO_PRESSED(y, x, board_mines, stepped);
         else if (ch == 'x')
         {
             wbkgd(winindex[y][x], COLOR_PAIR(1));
