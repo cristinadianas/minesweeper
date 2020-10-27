@@ -132,7 +132,7 @@ void show_in_win(int y, int x, char ch)
     wmove(winindex[y][x], cell_height/2, cell_width/2);
     wrefresh(winindex[y][x]);
 }
-void ZERO_PRESSED (int row, int col, int board_mines[][30], int stepped[][30])
+void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30])
 {
     stepped[row][col] = TRUE;
     wbkgd(winindex[row][col], COLOR_PAIR(color_0neighb));
@@ -190,8 +190,8 @@ void exZER0_PRESSED (int stepped[][30], int board_mines[][30], int y, int x)
 int main()
 {	WINDOW *my_win;
     bsetup();
-    int board_mines[30][30] = {0}, stepped[30][30]={0};
-    int y, x, laid_mines = 0;
+    int board_mines[30][30] = {0}, y, x, laid_mines = 0;
+    bool stepped[30][30] = {0}, marked[30][30] = {0};
     srand (time(NULL));
 
     for (y=0; y < board_rows; y++)
@@ -248,21 +248,42 @@ int main()
         int ch;
         while ((ch = getch()) != 'q' && ch != ' ' && ch != 'x')
             UDRL(ch, y, x, 2);
-        if (ch == ' ' && board_mines[y][x] != -1 && board_mines[y][x] != 0)
+        if (ch == ' ' && marked[y][x] == FALSE)
+        {
+            if (board_mines[y][x] != -1 && board_mines[y][x] != 0)
             {
                 wbkgd(winindex[y][x], COLOR_PAIR(color_1to9neighb));
                 wrefresh(winindex[y][x]);
                 show_in_win(y, x, '0' + board_mines[y][x]);
+                stepped[y][x] = TRUE;
             }
-        else if (ch == ' ' && board_mines[y][x] == 0)
-            ZERO_PRESSED(y, x, board_mines, stepped);
-        else if (ch == 'x')
-        {
-            wbkgd(winindex[y][x], COLOR_PAIR(color_markedcell));
-            wrefresh(winindex[y][x]);
-            show_in_win(y, x, 'x');
+            else if (board_mines[y][x] == 0)
+                ZERO_PRESSED(y, x, board_mines, stepped);
+            else
+                break;
         }
-        else break;
+        else if (ch == 'x' && stepped[y][x] == FALSE)
+        {
+            if (marked[y][x] == FALSE)
+            {
+                wbkgd(winindex[y][x], COLOR_PAIR(color_markedcell));
+                wrefresh(winindex[y][x]);
+                show_in_win(y, x, 'x');
+                marked[y][x] = TRUE;
+            }
+            else
+            {
+                wbkgd(winindex[y][x], COLOR_PAIR(0));
+                wrefresh(winindex[y][x]);
+                show_in_win(y, x, ' ');
+                marked[y][x] = FALSE;
+            }
+        }
+        else if(ch == 'q')
+        {
+            endwin();
+            return 0;
+        }
     }
     endwin();
     return 0;
