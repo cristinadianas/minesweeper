@@ -12,6 +12,7 @@ unsigned int board_rows, board_cols, total_mines;
 #define cell_height 3
 WINDOW *winindex[30][30];
 
+#define color_default 0
 #define color_markedcell 1
 #define color_1to9neighb 2
 #define color_0neighb 3
@@ -126,8 +127,9 @@ void UDRL (int ch, int &starty, int &startx, int color)
             break;
         }
 }
-void show_in_win(int y, int x, char ch)
+void show_in_win(int y, int x, char ch, int color_pair)
 {
+    wbkgd(winindex[y][x], COLOR_PAIR(color_pair));
     mvwaddch(winindex[y][x], cell_height/2, cell_width/2, ch);
     wmove(winindex[y][x], cell_height/2, cell_width/2);
     wrefresh(winindex[y][x]);
@@ -135,8 +137,7 @@ void show_in_win(int y, int x, char ch)
 void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30])
 {
     stepped[row][col] = TRUE;
-    wbkgd(winindex[row][col], COLOR_PAIR(color_0neighb));
-    wrefresh(winindex[row][col]);
+    show_in_win(row, col, ' ', color_0neighb);
     for (int y = row - 1; y <= row + 1; y++)
         for (int x = col - 1; x <= col + 1; x++)
             if (valid_cell(y, x) == TRUE && stepped[y][x] == FALSE)
@@ -145,9 +146,7 @@ void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30])
                 else
                 {
                     stepped[y][x] = TRUE;
-                    wbkgd(winindex[y][x], COLOR_PAIR(color_1to9neighb));
-                    wrefresh(winindex[y][x]);
-                    show_in_win(y, x, '0' + board_mines[y][x]);
+                    show_in_win(y, x, '0' + board_mines[y][x], color_1to9neighb);
                 }
     move_cursor(row, col);
 }
@@ -252,9 +251,7 @@ int main()
         {
             if (board_mines[y][x] != -1 && board_mines[y][x] != 0)
             {
-                wbkgd(winindex[y][x], COLOR_PAIR(color_1to9neighb));
-                wrefresh(winindex[y][x]);
-                show_in_win(y, x, '0' + board_mines[y][x]);
+                show_in_win(y, x, '0' + board_mines[y][x], color_1to9neighb);
                 stepped[y][x] = TRUE;
             }
             else if (board_mines[y][x] == 0)
@@ -266,16 +263,12 @@ int main()
         {
             if (marked[y][x] == FALSE)
             {
-                wbkgd(winindex[y][x], COLOR_PAIR(color_markedcell));
-                wrefresh(winindex[y][x]);
-                show_in_win(y, x, 'x');
+                show_in_win(y, x, 'x', color_markedcell);
                 marked[y][x] = TRUE;
             }
             else
             {
-                wbkgd(winindex[y][x], COLOR_PAIR(0));
-                wrefresh(winindex[y][x]);
-                show_in_win(y, x, ' ');
+                show_in_win(y, x, ' ', color_default);
                 marked[y][x] = FALSE;
             }
         }
