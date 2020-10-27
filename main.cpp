@@ -12,6 +12,10 @@ unsigned int board_rows, board_cols, total_mines;
 #define cell_height 3
 WINDOW *winindex[30][30];
 
+#define color_markedcell 1
+#define color_1to9neighb 2
+#define color_0neighb 3
+
 bool valid_cell(int y, int x)
 {
     if (y >= 0 && y < board_rows && x >= 0 && x < board_cols)
@@ -131,7 +135,7 @@ void show_in_win(int y, int x, char ch)
 void ZERO_PRESSED (int row, int col, int board_mines[][30], int stepped[][30])
 {
     stepped[row][col] = TRUE;
-    wbkgd(winindex[row][col], COLOR_PAIR(3));
+    wbkgd(winindex[row][col], COLOR_PAIR(color_0neighb));
     wrefresh(winindex[row][col]);
     for (int y = row - 1; y <= row + 1; y++)
         for (int x = col - 1; x <= col + 1; x++)
@@ -141,7 +145,7 @@ void ZERO_PRESSED (int row, int col, int board_mines[][30], int stepped[][30])
                 else
                 {
                     stepped[y][x] = TRUE;
-                    wbkgd(winindex[y][x], COLOR_PAIR(2));
+                    wbkgd(winindex[y][x], COLOR_PAIR(color_1to9neighb));
                     wrefresh(winindex[y][x]);
                     show_in_win(y, x, '0' + board_mines[y][x]);
                 }
@@ -233,11 +237,11 @@ int main()
     if (can_change_color() == TRUE)
     {
         COLOR_MARKEDCELL = 8;
-        init_color(COLOR_MARKEDCELL, 1000, 345, 0); //Orange
+        init_color(COLOR_MARKEDCELL, 1000, 369, 55); //Orange RGB: 255, 94, 14
     }
-    init_pair(1, COLOR_MARKEDCELL, COLOR_BLACK);
-    init_pair(2, COLOR_GREEN, COLOR_BLACK);
-    init_pair(3, COLOR_BLACK, COLOR_BLACK);
+    init_pair(color_markedcell, COLOR_MARKEDCELL, COLOR_BLACK);
+    init_pair(color_1to9neighb, COLOR_GREEN, COLOR_BLACK);
+    init_pair(color_0neighb, COLOR_BLACK, COLOR_BLACK);
 
     while (1)
     {
@@ -246,7 +250,7 @@ int main()
             UDRL(ch, y, x, 2);
         if (ch == ' ' && board_mines[y][x] != -1 && board_mines[y][x] != 0)
             {
-                wbkgd(winindex[y][x], COLOR_PAIR(2));
+                wbkgd(winindex[y][x], COLOR_PAIR(color_1to9neighb));
                 wrefresh(winindex[y][x]);
                 show_in_win(y, x, '0' + board_mines[y][x]);
             }
@@ -254,7 +258,7 @@ int main()
             ZERO_PRESSED(y, x, board_mines, stepped);
         else if (ch == 'x')
         {
-            wbkgd(winindex[y][x], COLOR_PAIR(1));
+            wbkgd(winindex[y][x], COLOR_PAIR(color_markedcell));
             wrefresh(winindex[y][x]);
             show_in_win(y, x, 'x');
         }
