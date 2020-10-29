@@ -50,6 +50,15 @@ void num_neighbours (int v[][30], int y, int x)
 //            if (v[m][n]==-1) neighbours++;
 //    return neighbours;
 }
+int num_markedneighb(int row, int col, bool marked[][30])
+{
+    int neighbours = 0;
+    for (int y = row - 1; y <= row + 1; y++)
+        for (int x = col - 1; x <= col + 1; x++)
+            if (marked[y][x] == TRUE && valid_cell(y, x) == TRUE)
+                neighbours++;
+    return neighbours;
+}
 void bsetup()
 {
     int dif;
@@ -134,21 +143,37 @@ void show_in_win(int y, int x, char ch, int color_pair)
     wmove(winindex[y][x], cell_height/2, cell_width/2);
     wrefresh(winindex[y][x]);
 }
-void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30])
+void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30], bool marked[][30])
 {
     stepped[row][col] = TRUE;
     show_in_win(row, col, ' ', color_0neighb);
     for (int y = row - 1; y <= row + 1; y++)
         for (int x = col - 1; x <= col + 1; x++)
-            if (valid_cell(y, x) == TRUE && stepped[y][x] == FALSE)
+            if (valid_cell(y, x) == TRUE && stepped[y][x] == FALSE && marked[y][x] == FALSE)
                 if (board_mines[y][x] == 0)
-                    ZERO_PRESSED(y, x, board_mines, stepped);
+                    ZERO_PRESSED(y, x, board_mines, stepped, marked);
                 else
                 {
                     stepped[y][x] = TRUE;
                     show_in_win(y, x, '0' + board_mines[y][x], color_1to9neighb);
                 }
     move_cursor(row, col);
+}
+void NEWCELL_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30], bool marked[][30], bool &mine_pressed)
+{
+    switch (board_mines[row][col])
+    {
+        case 0:
+            ZERO_PRESSED(row, col, board_mines, stepped, marked);
+            break;
+        case -1:
+            mine_pressed = TRUE;
+            break;
+        default:
+            stepped[row][col] = TRUE;
+            show_in_win(row, col, '0' + board_mines[row][col], color_1to9neighb);
+            break;
+    }
 }
 void exZER0_PRESSED (int stepped[][30], int board_mines[][30], int y, int x)
 {
@@ -190,7 +215,6 @@ int main()
 {	WINDOW *my_win;
     bsetup();
     int board_mines[30][30] = {0}, y, x, laid_mines = 0;
-    bool stepped[30][30] = {0}, marked[30][30] = {0};
     srand (time(NULL));
 
     for (y=0; y < board_rows; y++)
@@ -241,42 +265,43 @@ int main()
     init_pair(color_markedcell, COLOR_MARKEDCELL, COLOR_BLACK);
     init_pair(color_1to9neighb, COLOR_GREEN, COLOR_BLACK);
     init_pair(color_0neighb, COLOR_BLACK, COLOR_BLACK);
+    bool stepped[30][30] = {0}, marked[30][30] = {0}, mine_pressed = FALSE;
 
     while (1)
     {
         int ch;
         while ((ch = getch()) != 'q' && ch != ' ' && ch != 'x')
             UDRL(ch, y, x, 2);
-        if (ch == ' ' && marked[y][x] == FALSE)
-        {
-            if (board_mines[y][x] != -1 && board_mines[y][x] != 0)
-            {
-                show_in_win(y, x, '0' + board_mines[y][x], color_1to9neighb);
-                stepped[y][x] = TRUE;
-            }
-            else if (board_mines[y][x] == 0)
-                ZERO_PRESSED(y, x, board_mines, stepped);
-            else
+        switch (ch) {
+            case ' ':
+                if (marked[y][x] == FALSE && stepped[y][x] == FALSE)
+                    NEWCELL_PRESSED(y, x, board_mines, stepped, marked, mine_pressed);
+                else if (stepped[y][x] == TRUE  &&  num_markedneighb(y, x, marked) == board_mines[y][x])
+                {
+                    for (int i = y-1; i <= y+1; i++)
+                        for (int j = x-1; j <= x+1; j++)
+                            if (marked[i][j] == FALSE && stepped[i][j] == FALSE)
+                                NEWCELL_PRESSED(i, j, board_mines, stepped, marked, mine_pressed);
+                    move_cursor(y, x);
+                }
                 break;
+            case 'x':
+                if (stepped[y][x] == FALSE)
+                    if (marked[y][x] == FALSE) {
+                        show_in_win(y, x, 'x', color_markedcell);
+                        marked[y][x] = TRUE;
+                    }
+                    else {
+                        show_in_win(y, x, ' ', color_default);
+                        marked[y][x] = FALSE;
+                    }
+                break;
+            case 'q':
+                endwin();
+                return 0;
         }
-        else if (ch == 'x' && stepped[y][x] == FALSE)
-        {
-            if (marked[y][x] == FALSE)
-            {
-                show_in_win(y, x, 'x', color_markedcell);
-                marked[y][x] = TRUE;
-            }
-            else
-            {
-                show_in_win(y, x, ' ', color_default);
-                marked[y][x] = FALSE;
-            }
-        }
-        else if(ch == 'q')
-        {
-            endwin();
-            return 0;
-        }
+        if (mine_pressed == TRUE)
+            break;
     }
     endwin();
     return 0;
