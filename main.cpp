@@ -16,6 +16,7 @@ WINDOW *winindex[30][30];
 #define color_markedcell 1
 #define color_1to9neighb 2
 #define color_0neighb 3
+#define Red0nBlack 4
 
 bool valid_cell(int y, int x)
 {
@@ -254,7 +255,6 @@ int main()
             wrefresh(my_win);
         }
 
-    move_cursor(0, 0); x=0; y=0;
     start_color();
     short COLOR_MARKEDCELL = COLOR_YELLOW;
     if (can_change_color() == TRUE)
@@ -265,7 +265,16 @@ int main()
     init_pair(color_markedcell, COLOR_MARKEDCELL, COLOR_BLACK);
     init_pair(color_1to9neighb, COLOR_GREEN, COLOR_BLACK);
     init_pair(color_0neighb, COLOR_BLACK, COLOR_BLACK);
+    init_pair(Red0nBlack, COLOR_RED, COLOR_BLACK);
+
+    int marked_cells = 0;
     bool stepped[30][30] = {0}, marked[30][30] = {0}, mine_pressed = FALSE;
+
+    WINDOW *minesCounter = create_newwin(3, 15, 0, board_rows * cell_width);
+    mvwprintw(minesCounter, 1, 2, "%d/%d Mines ", marked_cells, total_mines);
+    wrefresh(minesCounter);
+
+    move_cursor(0, 0); x = 0; y = 0;
 
     while (1)
     {
@@ -288,10 +297,20 @@ int main()
             case 'x':
                 if (stepped[y][x] == FALSE)
                     if (marked[y][x] == FALSE) {
+                        mvwprintw(minesCounter, 1, 2, "%d/%d Mines ", ++marked_cells, total_mines);
+                        if (marked_cells - 1 == total_mines) {
+                            wbkgd(minesCounter, COLOR_PAIR(Red0nBlack));
+                            beep();
+                        }
+                        wrefresh(minesCounter);
                         show_in_win(y, x, 'x', color_markedcell);
                         marked[y][x] = TRUE;
                     }
                     else {
+                        mvwprintw(minesCounter, 1, 2, "%d/%d Mines ", --marked_cells, total_mines);
+                        if (marked_cells == total_mines)
+                            wbkgd(minesCounter, COLOR_PAIR(color_default));
+                        wrefresh(minesCounter);
                         show_in_win(y, x, ' ', color_default);
                         marked[y][x] = FALSE;
                     }
