@@ -18,6 +18,13 @@ WINDOW *winindex[30][30];
 #define color_0neighb 3
 #define Red0nBlack 4
 
+WINDOW *create_newwin(int height, int width, int starty, int startx)
+{
+    WINDOW *local_win;
+    local_win = newwin(height, width, starty, startx);
+    box(local_win, 0 , 0);		// 0, 0 gives default characters for the vertical and horizontal lines
+    return local_win;
+}
 bool valid_cell(int y, int x)
 {
     if (y >= 0 && y < board_rows && x >= 0 && x < board_cols)
@@ -34,22 +41,6 @@ void num_neighbours (int v[][30], int y, int x)
     if (v[y+1][x-1]!=-1) v[y+1][x-1]++;
     if (v[y][x-1]!=-1) v[y][x-1]++;
     if (v[y][x+1]!=-1) v[y][x+1]++;
-
-//    unsigned int neighbours=0;
-//    if (y!=0 && x!=0 && v[y-1][x-1]==-1) neighbours++;
-//    if (y!=0 && v[y-1][x]==-1) neighbours++;
-//    if (y!=0 && x!=board_cols-1 && v[y-1][x+1]==-1) neighbours++;
-//    if (y!=board_rows-1 && x!=board_cols-1 && v[y+1][x+1]==-1) neighbours++;
-//    if (y!=board_rows-1 && v[y+1][x]==-1) neighbours++;
-//    if (y!=board_rows-1 && x!=0 && v[y+1][x-1]==-1) neighbours++;
-//    if (x!=0 && v[y][x-1]==-1) neighbours++;
-//    if (x!=board_cols-1 && v[y][x+1]==-1) neighbours++;
-//    return neighbours;
-
-//    for (short m=y-1; m<=y+1; m++)
-//        for (short n=x-1; n<=x+1; n++)
-//            if (v[m][n]==-1) neighbours++;
-//    return neighbours;
 }
 int num_markedneighb(int row, int col, bool marked[][30])
 {
@@ -99,15 +90,13 @@ void move_cursor (int row, int column)
     wmove(winindex[row][column], cell_height/2, cell_width/2);
     wrefresh(winindex[row][column]);
 }
-void UDRL (int ch, int &starty, int &startx, int color)
+void UDRL (int ch, int &starty, int &startx)
 {
-    //wattroff(winindex[starty][startx], A_BOLD);
     switch (ch) {
         case KEY_LEFT:
             if (startx > 0)
             {
                 wmove(winindex[starty][--startx], cell_height/2, cell_width/2);
-                wattron(winindex[starty][startx], A_UNDERLINE);
                 wrefresh(winindex[starty][startx]);
             }
             break;
@@ -115,7 +104,6 @@ void UDRL (int ch, int &starty, int &startx, int color)
             if (startx < board_cols - 1)
             {
                 wmove(winindex[starty][++startx], cell_height/2, cell_width/2);
-                wattron(winindex[starty][startx], A_BOLD);
                 wrefresh(winindex[starty][startx]);
             }
             break;
@@ -123,7 +111,6 @@ void UDRL (int ch, int &starty, int &startx, int color)
             if (starty > 0)
             {
                 wmove(winindex[--starty][startx], cell_height/2, cell_width/2);
-                wattron(winindex[starty][startx], A_BOLD);
                 wrefresh(winindex[starty][startx]);
             }
             break;
@@ -131,7 +118,6 @@ void UDRL (int ch, int &starty, int &startx, int color)
             if (starty < board_rows - 1)
             {
                 wmove(winindex[++starty][startx], cell_height/2, cell_width/2);
-                wattron(winindex[starty][startx], A_UNDERLINE);
                 wrefresh(winindex[starty][startx]);
             }
             break;
@@ -176,44 +162,9 @@ void NEWCELL_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30
             break;
     }
 }
-void exZER0_PRESSED (int stepped[][30], int board_mines[][30], int y, int x)
-{
-//    stepped[y][x] = 1;
-//    wbkgd(winindex[y][x], COLOR_PAIR(3));
-//    wrefresh(winindex[y][x]);
-//    int a=0, b=0;
-//    bool repeat = 1;
-//    while (repeat == 1)
-//    {
-//        repeat = 0;
-//        for (a = 0; a < board_rows; a++)
-//            for (b = 0; b < board_cols; b++)
-//                if (stepped[a][b] == 0)
-//                for (int i = a - 1; i <= a + 1; i++)
-//                    for (int j = b - 1; j <= b + 1; j++)
-//                    if (board_mines[i][j] == 0 && stepped[i][j] == 1 && i!=-1 && j!=-1 && i!=board_rows && j!= board_cols)
-//                    {
-//                        if (board_mines[a][b] == 0)
-//                        {
-//                            wbkgd(winindex[a][b], COLOR_PAIR(3));
-//                            wrefresh(winindex[a][b]);
-//                        }
-//                        else
-//                        {
-//                            show_in_win(a, b, '0' + board_mines[a][b]);
-//                            wbkgd(winindex[a][b], COLOR_PAIR(2));
-//                            wrefresh(winindex[a][b]);
-//                        }
-//                        wrefresh(winindex[a][b]);
-//                        stepped[a][b] = 1;
-//                        repeat = 1;
-//                    }
-//    }
-//    move_cursor(y, x);
-}
 
 int main()
-{	WINDOW *my_win;
+{
     bsetup();
     int board_mines[30][30] = {0}, y, x, laid_mines = 0;
     srand (time(NULL));
@@ -227,19 +178,6 @@ int main()
                 num_neighbours(board_mines, y, x);
             }
 
-//    for (y=0; y < board_rows; y++)
-//        for (x=0; x < board_cols; x++)
-//            if (board_mines[y][x] != -1)
-//                board_mines[y][x] = num_neighbours(board_mines, y, x);
-
-//    for (y=0; y < board_rows; y++)
-//    {
-//        for (x=0; x < board_cols; x++)
-//            if (board_mines[y][x] == -1)  cout << "*  ";
-//            else  cout << num_neighbours(board_mines, y, x) << "  ";
-//        cout<<endl;
-//    }
-
     initscr();
     cbreak();
     noecho();
@@ -249,10 +187,8 @@ int main()
     for (y = 0; y < board_rows ; y++)
         for (x = 0; x < board_cols; x++)
         {
-            my_win = create_newwin(cell_height, cell_width, y*cell_height, x*cell_width);
-            winindex[y][x]=my_win;
-            //wattrset(my_win, A_UNDERLINE);
-            wrefresh(my_win);
+            winindex[y][x] = create_newwin(cell_height, cell_width, y*cell_height, x*cell_width);
+            wrefresh(winindex[y][x]);
         }
 
     start_color();
@@ -280,7 +216,7 @@ int main()
     {
         int ch;
         while ((ch = getch()) != 'q' && ch != ' ' && ch != 'x')
-            UDRL(ch, y, x, 2);
+            UDRL(ch, y, x);
         switch (ch) {
             case ' ':
                 if (marked[y][x] == FALSE && stepped[y][x] == FALSE)
@@ -325,13 +261,4 @@ int main()
     endwin();
     return 0;
 }
-
-WINDOW *create_newwin(int height, int width, int starty, int startx)
-{
-    WINDOW *local_win;
-    local_win = newwin(height, width, starty, startx);
-    box(local_win, 0 , 0);		// 0, 0 gives default characters for the vertical and horizontal lines
-    return local_win;
-}
-
 
