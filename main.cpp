@@ -206,7 +206,7 @@ int main()
     int marked_cells = 0;
     bool stepped[30][30] = {0}, marked[30][30] = {0}, mine_pressed = FALSE;
 
-    WINDOW *minesCounter = create_newwin(3, 15, 0, board_rows * cell_width);
+    WINDOW *minesCounter = create_newwin(3, 15, 0, board_cols * cell_width);
     mvwprintw(minesCounter, 1, 2, "%d/%d Mines ", marked_cells, total_mines);
     wrefresh(minesCounter);
 
