@@ -17,6 +17,7 @@ WINDOW *winindex[30][30];
 #define color_1to9neighb 2
 #define color_0neighb 3
 #define Red0nBlack 4
+#define blackOnRed 5
 
 WINDOW *create_newwin(int height, int width, int starty, int startx)
 {
@@ -154,6 +155,7 @@ void NEWCELL_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30
             ZERO_PRESSED(row, col, board_mines, stepped, marked);
             break;
         case -1:
+            stepped[row][col] = TRUE;
             mine_pressed = TRUE;
             break;
         default:
@@ -202,6 +204,7 @@ int main()
     init_pair(color_1to9neighb, COLOR_GREEN, COLOR_BLACK);
     init_pair(color_0neighb, COLOR_BLACK, COLOR_BLACK);
     init_pair(Red0nBlack, COLOR_RED, COLOR_BLACK);
+    init_pair(blackOnRed, COLOR_BLACK, COLOR_RED);
 
     int marked_cells = 0;
     bool stepped[30][30] = {0}, marked[30][30] = {0}, mine_pressed = FALSE;
@@ -258,6 +261,14 @@ int main()
         if (mine_pressed == TRUE)
             break;
     }
+
+    for (int i = y-1; i <= y+1; i++)
+        for (int j = x-1; j <= x+1; j++)
+            if(valid_cell(i, j) == TRUE && board_mines[i][j] == -1 && stepped[i][j] == TRUE)
+                show_in_win(i, j, '*', blackOnRed);
+    move_cursor(y, x);
+
+    while (getch() != 'q');
     endwin();
     return 0;
 }
