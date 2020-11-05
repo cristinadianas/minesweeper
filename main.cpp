@@ -266,6 +266,15 @@ int main()
         for (int j = x-1; j <= x+1; j++)
             if(valid_cell(i, j) == TRUE && board_mines[i][j] == -1 && stepped[i][j] == TRUE)
                 show_in_win(i, j, '*', blackOnRed);
+
+    for (int i = 0; i < board_rows ; i++)
+        for (int j = 0; j < board_cols; j++)
+            if (marked[i][j] == TRUE && board_mines[i][j] != -1)
+            {
+                wbkgd(winindex[i][j], COLOR_PAIR(Red0nBlack));
+                wrefresh(winindex[i][j]);
+            }
+
     move_cursor(y, x);
 
     while (getch() != 'q');
