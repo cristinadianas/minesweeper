@@ -4,8 +4,6 @@
 #include <ncursesw/ncurses.h>
 using namespace std;
 
-WINDOW *create_newwin(int height, int width, int starty, int startx);
-
 unsigned int board_rows, board_cols, total_mines;
 
 #define cell_width 5
@@ -14,44 +12,11 @@ WINDOW *winindex[30][30];
 
 #define color_default 0
 #define color_markedcell 1
-#define color_1to9neighb 2
-#define color_0neighb 3
-#define Red0nBlack 4
-#define blackOnRed 5
+#define green_on_black 2
+#define black_on_black 3
+#define red_on_black 4
+#define black_on_red 5
 
-WINDOW *create_newwin(int height, int width, int starty, int startx)
-{
-    WINDOW *local_win;
-    local_win = newwin(height, width, starty, startx);
-    box(local_win, 0 , 0);		// 0, 0 gives default characters for the vertical and horizontal lines
-    return local_win;
-}
-bool valid_cell(int y, int x)
-{
-    if (y >= 0 && y < board_rows && x >= 0 && x < board_cols)
-        return TRUE;
-    return FALSE;
-}
-void num_neighbours (int v[][30], int y, int x)
-{
-    if (v[y-1][x-1]!=-1) v[y-1][x-1]++;
-    if (v[y-1][x]!=-1) v[y-1][x]++;
-    if (v[y-1][x+1]!=-1) v[y-1][x+1]++;
-    if (v[y+1][x+1]!=-1) v[y+1][x+1]++;
-    if (v[y+1][x]!=-1) v[y+1][x]++;
-    if (v[y+1][x-1]!=-1) v[y+1][x-1]++;
-    if (v[y][x-1]!=-1) v[y][x-1]++;
-    if (v[y][x+1]!=-1) v[y][x+1]++;
-}
-int num_markedneighb(int row, int col, bool marked[][30])
-{
-    int neighbours = 0;
-    for (int y = row - 1; y <= row + 1; y++)
-        for (int x = col - 1; x <= col + 1; x++)
-            if (marked[y][x] == TRUE && valid_cell(y, x) == TRUE)
-                neighbours++;
-    return neighbours;
-}
 void bsetup()
 {
     int dif;
@@ -86,55 +51,90 @@ void bsetup()
     }
 
 }
-void move_cursor (int row, int column)
+bool valid_cell(int row, int col)
 {
-    wmove(winindex[row][column], cell_height/2, cell_width/2);
-    wrefresh(winindex[row][column]);
+    if (row >= 0 && row < board_rows && col >= 0 && col < board_cols)
+        return TRUE;
+    return FALSE;
 }
-void UDRL (int ch, int &starty, int &startx)
+void num_neighbours (int row, int col, int v[][30])
+{
+    if (v[row-1][col-1]!=-1) v[row-1][col-1]++;
+    if (v[row-1][col]!=-1) v[row-1][col]++;
+    if (v[row-1][col+1]!=-1) v[row-1][col+1]++;
+    if (v[row+1][col+1]!=-1) v[row+1][col+1]++;
+    if (v[row+1][col]!=-1) v[row+1][col]++;
+    if (v[row+1][col-1]!=-1) v[row+1][col-1]++;
+    if (v[row][col-1]!=-1) v[row][col-1]++;
+    if (v[row][col+1]!=-1) v[row][col+1]++;
+}
+
+WINDOW *create_newwin(int height, int width, int starty, int startx)
+{
+    WINDOW *local_win;
+    local_win = newwin(height, width, starty, startx);
+    box(local_win, 0 , 0);		// 0, 0 gives default characters for the vertical and horizontal lines
+    return local_win;
+}
+void show_in_win(int row, int col, char ch, int color_pair)
+{
+    wbkgd(winindex[row][col], COLOR_PAIR(color_pair));
+    mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2, ch);
+    wmove(winindex[row][col], cell_height / 2, cell_width / 2);
+    wrefresh(winindex[row][col]);
+}
+void move_cursor (int row, int col)
+{
+    wmove(winindex[row][col], cell_height / 2, cell_width / 2);
+    wrefresh(winindex[row][col]);
+}
+void UDRL (int &row, int &col, int ch)
 {
     switch (ch) {
         case KEY_LEFT:
-            if (startx > 0)
+            if (col > 0)
             {
-                wmove(winindex[starty][--startx], cell_height/2, cell_width/2);
-                wrefresh(winindex[starty][startx]);
+                wmove(winindex[row][--col], cell_height / 2, cell_width / 2);
+                wrefresh(winindex[row][col]);
             }
             break;
         case KEY_RIGHT:
-            if (startx < board_cols - 1)
+            if (col < board_cols - 1)
             {
-                wmove(winindex[starty][++startx], cell_height/2, cell_width/2);
-                wrefresh(winindex[starty][startx]);
+                wmove(winindex[row][++col], cell_height / 2, cell_width / 2);
+                wrefresh(winindex[row][col]);
             }
             break;
         case KEY_UP:
-            if (starty > 0)
+            if (row > 0)
             {
-                wmove(winindex[--starty][startx], cell_height/2, cell_width/2);
-                wrefresh(winindex[starty][startx]);
+                wmove(winindex[--row][col], cell_height / 2, cell_width / 2);
+                wrefresh(winindex[row][col]);
             }
             break;
         case KEY_DOWN:
-            if (starty < board_rows - 1)
+            if (row < board_rows - 1)
             {
-                wmove(winindex[++starty][startx], cell_height/2, cell_width/2);
-                wrefresh(winindex[starty][startx]);
+                wmove(winindex[++row][col], cell_height / 2, cell_width / 2);
+                wrefresh(winindex[row][col]);
             }
             break;
         }
 }
-void show_in_win(int y, int x, char ch, int color_pair)
+
+int num_markedneighb(int row, int col, bool marked[][30])
 {
-    wbkgd(winindex[y][x], COLOR_PAIR(color_pair));
-    mvwaddch(winindex[y][x], cell_height/2, cell_width/2, ch);
-    wmove(winindex[y][x], cell_height/2, cell_width/2);
-    wrefresh(winindex[y][x]);
+    int neighbours = 0;
+    for (int y = row - 1; y <= row + 1; y++)
+        for (int x = col - 1; x <= col + 1; x++)
+            if (marked[y][x] == TRUE && valid_cell(y, x) == TRUE)
+                neighbours++;
+    return neighbours;
 }
 void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30], bool marked[][30])
 {
     stepped[row][col] = TRUE;
-    show_in_win(row, col, ' ', color_0neighb);
+    show_in_win(row, col, ' ', black_on_black);
     for (int y = row - 1; y <= row + 1; y++)
         for (int x = col - 1; x <= col + 1; x++)
             if (valid_cell(y, x) == TRUE && stepped[y][x] == FALSE && marked[y][x] == FALSE)
@@ -143,7 +143,7 @@ void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30], 
                 else
                 {
                     stepped[y][x] = TRUE;
-                    show_in_win(y, x, '0' + board_mines[y][x], color_1to9neighb);
+                    show_in_win(y, x, '0' + board_mines[y][x], green_on_black);
                 }
     move_cursor(row, col);
 }
@@ -160,7 +160,7 @@ void NEWCELL_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30
             break;
         default:
             stepped[row][col] = TRUE;
-            show_in_win(row, col, '0' + board_mines[row][col], color_1to9neighb);
+            show_in_win(row, col, '0' + board_mines[row][col], green_on_black);
             break;
     }
 }
@@ -177,7 +177,7 @@ int main()
             {
                 board_mines[y][x]=-1;
                 laid_mines++;
-                num_neighbours(board_mines, y, x);
+                num_neighbours(y, x, board_mines);
             }
 
     initscr();
@@ -186,8 +186,8 @@ int main()
     keypad(stdscr, TRUE);
     refresh();
 
-    for (y = 0; y < board_rows ; y++)
-        for (x = 0; x < board_cols; x++)
+    for (y=0; y < board_rows; y++)
+        for (x=0; x < board_cols; x++)
         {
             winindex[y][x] = create_newwin(cell_height, cell_width, y*cell_height, x*cell_width);
             wrefresh(winindex[y][x]);
@@ -201,10 +201,10 @@ int main()
         init_color(COLOR_MARKEDCELL, 1000, 369, 55); //Orange RGB: 255, 94, 14
     }
     init_pair(color_markedcell, COLOR_MARKEDCELL, COLOR_BLACK);
-    init_pair(color_1to9neighb, COLOR_GREEN, COLOR_BLACK);
-    init_pair(color_0neighb, COLOR_BLACK, COLOR_BLACK);
-    init_pair(Red0nBlack, COLOR_RED, COLOR_BLACK);
-    init_pair(blackOnRed, COLOR_BLACK, COLOR_RED);
+    init_pair(green_on_black, COLOR_GREEN, COLOR_BLACK);
+    init_pair(black_on_black, COLOR_BLACK, COLOR_BLACK);
+    init_pair(red_on_black, COLOR_RED, COLOR_BLACK);
+    init_pair(black_on_red, COLOR_BLACK, COLOR_RED);
 
     int marked_cells = 0;
     bool stepped[30][30] = {0}, marked[30][30] = {0}, mine_pressed = FALSE;
@@ -215,11 +215,11 @@ int main()
 
     move_cursor(0, 0); x = 0; y = 0;
 
-    while (1)
+    int ch;
+    while (mine_pressed == FALSE)
     {
-        int ch;
         while ((ch = getch()) != 'q' && ch != ' ' && ch != 'x')
-            UDRL(ch, y, x);
+            UDRL(y, x, ch);
         switch (ch) {
             case ' ':
                 if (marked[y][x] == FALSE && stepped[y][x] == FALSE)
@@ -238,7 +238,7 @@ int main()
                     if (marked[y][x] == FALSE) {
                         mvwprintw(minesCounter, 1, 2, "%d/%d Mines ", ++marked_cells, total_mines);
                         if (marked_cells - 1 == total_mines) {
-                            wbkgd(minesCounter, COLOR_PAIR(Red0nBlack));
+                            wbkgd(minesCounter, COLOR_PAIR(red_on_black));
                             beep();
                         }
                         wrefresh(minesCounter);
@@ -258,20 +258,18 @@ int main()
                 endwin();
                 return 0;
         }
-        if (mine_pressed == TRUE)
-            break;
     }
 
     for (int i = y-1; i <= y+1; i++)
         for (int j = x-1; j <= x+1; j++)
             if(valid_cell(i, j) == TRUE && board_mines[i][j] == -1 && stepped[i][j] == TRUE)
-                show_in_win(i, j, '*', blackOnRed);
+                show_in_win(i, j, '*', black_on_red);
 
     for (int i = 0; i < board_rows ; i++)
         for (int j = 0; j < board_cols; j++)
             if (marked[i][j] == TRUE && board_mines[i][j] != -1)
             {
-                wbkgd(winindex[i][j], COLOR_PAIR(Red0nBlack));
+                wbkgd(winindex[i][j], COLOR_PAIR(red_on_black));
                 wrefresh(winindex[i][j]);
             }
 
