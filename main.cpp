@@ -4,7 +4,7 @@
 #include <ncursesw/ncurses.h>
 using namespace std;
 
-unsigned int board_rows, board_cols, total_mines;
+unsigned int board_rows = 0, board_cols = 0, total_mines;
 
 #define cell_width 5
 #define cell_height 3
@@ -19,9 +19,8 @@ WINDOW *winindex[30][30];
 void bsetup()
 {
     int dif;
-    cout<<"DIFFICULTY: \n 1 = Beginner (9x9 - 10 Mines)  \n 2 = Medium (16x16 - 40 Mines) \n 3 = Difficult (16x30 - 99 Mines) \n 4 = Custom (max: 30x30 - 900 Mines) \n \n";
+    cout<<"\n DIFFICULTY: \n 1 = Beginner (9x9 - 10 Mines)  \n 2 = Medium (16x16 - 40 Mines) \n 3 = Difficult (30x16 - 99 Mines) \n 4 = Custom (max: 30x16 - 480 Mines) \n \n";
     cin>>dif;
-    cout<<endl;
     switch(dif) {
         case 1:
             board_cols=9;
@@ -39,13 +38,21 @@ void bsetup()
             total_mines=99;
             break;
         case 4:
-            cout<<"WIDTH = ";
-            cin >> board_cols;
-            cout<<"HEIGHT = ";
-            cin >> board_rows;
-            cout<<"MINES = ";
-            cin >> total_mines;
             cout<<endl;
+            do {
+                cout<<"WIDTH = ";
+                cin >> board_cols;
+            } while (board_cols < 1 || board_cols > 30);
+
+            do {
+                cout<<"HEIGHT = ";
+                cin >> board_rows;
+            } while (board_rows < 1 || board_rows > 16);
+
+            do {
+                cout<<"MINES = ";
+                cin >> total_mines;
+            } while (total_mines < 0 || total_mines > board_rows * board_cols);
             break;
     }
 
@@ -177,8 +184,12 @@ void NEWCELL_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30
 
 int main()
 {
-    bsetup();
     int board_mines[30][30] = {0}, y, x, laid_mines = 0;
+    if (board_rows == 0)
+    {
+        bsetup();
+        board_mines[30][30] = {0};
+    }
     srand (time(NULL));
 
     for (y=0; y < board_rows; y++)
@@ -274,6 +285,8 @@ int main()
     }
 
     mvwaddstr(status, 4, 1, "                            ");
+    mvwaddstr(status, 5, 3, "Press any key besides 'q'");
+    mvwaddstr(status, 6, 9, "to continue.");
     wrefresh(status);
 
     if (steps == (board_rows * board_cols) - total_mines) //WIN
@@ -326,7 +339,14 @@ int main()
         }
     }
 
-    endwin();
-    return 0;
+    if (ch == 'q')
+    {
+        endwin();
+        return 0;
+    }
+
+    nodelay(stdscr, FALSE);
+    curs_set(1);
+    main();
 }
 
