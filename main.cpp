@@ -15,7 +15,6 @@ WINDOW *winindex[30][30];
 #define green_on_black 2
 #define black_on_black 3
 #define red_on_black 4
-#define black_on_red 5
 
 void bsetup()
 {
@@ -121,6 +120,14 @@ void UDRL (int &row, int &col, int ch)
             break;
         }
 }
+void sleep(float seconds)
+{
+    clock_t startClock = clock();
+    float secondsAhead = seconds * CLOCKS_PER_SEC;
+    // do nothing until the elapsed time has passed
+    while (clock() < startClock + secondsAhead);
+    return;
+}
 
 int num_markedneighb(int row, int col, bool marked[][30])
 {
@@ -207,7 +214,6 @@ int main()
     init_pair(green_on_black, COLOR_GREEN, COLOR_BLACK);
     init_pair(black_on_black, COLOR_BLACK, COLOR_BLACK);
     init_pair(red_on_black, COLOR_RED, COLOR_BLACK);
-    init_pair(black_on_red, COLOR_BLACK, COLOR_RED);
 
     int marked_cells = 0, steps = 0;
     bool stepped[30][30] = {0}, marked[30][30] = {0}, mine_pressed = FALSE;
@@ -267,37 +273,59 @@ int main()
         }
     }
 
+    mvwaddstr(status, 4, 1, "                            ");
+    wrefresh(status);
+
     if (steps == (board_rows * board_cols) - total_mines) //WIN
     {
+        mvwaddstr(status, 4, 11, "YOU WON");
+        wbkgd(status, COLOR_PAIR(green_on_black));
+        wrefresh(status);
         for (int i = 0; i < board_rows ; i++)
             for (int j = 0; j < board_cols; j++)
                 if (marked[i][j] == FALSE && board_mines[i][j] == -1)
                     show_in_win(i, j, 'x', color_markedcell);
-
-        mvwaddstr(status, 4, 1, "                            ");
-        wrefresh(status);
-        mvwaddstr(status, 4, 11, "YOU WON");
-        wbkgd(status, COLOR_PAIR(green_on_black));
-        wrefresh(status);
+        move_cursor(y, x);
+        ch = getch();
     }
 
     else //LOSE
     {
-        for (int i = y-1; i <= y+1; i++)
-            for (int j = x-1; j <= x+1; j++)
-                if(valid_cell(i, j) == TRUE && board_mines[i][j] == -1 && stepped[i][j] == TRUE)
-                    show_in_win(i, j, '*', black_on_red);
+        flash();
+        mvwaddstr(status, 4, 10, "YOU LOST");
+        wbkgd(status, COLOR_PAIR(red_on_black));
+        wrefresh(status);
+
         for (int i = 0; i < board_rows ; i++)
             for (int j = 0; j < board_cols; j++)
                 if (marked[i][j] == TRUE && board_mines[i][j] != -1)
-                {
-                    wbkgd(winindex[i][j], COLOR_PAIR(red_on_black));
-                    wrefresh(winindex[i][j]);
-                }
+                    show_in_win(i, j, '-', color_markedcell);
+                else if (marked[i][j] == FALSE && board_mines[i][j] == -1)
+                    show_in_win(i, j, '*', red_on_black);
+
+        curs_set(0);
+        nodelay(stdscr, TRUE);
+        while ((ch = getch()) == ERR)
+        {
+            for (int i = y-1; i <= y+1; i++)
+                for (int j = x-1; j <= x+1; j++)
+                    if(valid_cell(i, j) == TRUE && board_mines[i][j] == -1 && stepped[i][j] == TRUE)
+                    {
+                        wbkgd(winindex[i][j], COLOR_PAIR(black_on_black));
+                        wrefresh(winindex[i][j]);
+                    }
+            sleep(0.1);
+            for (int i = y-1; i <= y+1; i++)
+                for (int j = x-1; j <= x+1; j++)
+                    if(valid_cell(i, j) == TRUE && board_mines[i][j] == -1 && stepped[i][j] == TRUE)
+                    {
+                        wbkgd(winindex[i][j], COLOR_PAIR(red_on_black));
+                        wrefresh(winindex[i][j]);
+                    }
+            sleep(0.1);
+        }
     }
 
-    move_cursor(y, x);
-    while (getch() != 'q');
     endwin();
     return 0;
 }
