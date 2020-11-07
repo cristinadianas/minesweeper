@@ -86,12 +86,12 @@ void show_in_win(int row, int col, char ch, int color_pair)
 {
     wbkgd(winindex[row][col], COLOR_PAIR(color_pair));
     mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2, ch);
-    wmove(winindex[row][col], cell_height / 2, cell_width / 2);
     wrefresh(winindex[row][col]);
 }
 void move_cursor (int row, int col)
 {
-    wmove(winindex[row][col], cell_height / 2, cell_width / 2);
+    mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2 - 1, '[');
+    mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2 + 1, ']');
     wrefresh(winindex[row][col]);
 }
 void UDRL (int &row, int &col, int ch)
@@ -100,29 +100,37 @@ void UDRL (int &row, int &col, int ch)
         case KEY_LEFT:
             if (col > 0)
             {
-                wmove(winindex[row][--col], cell_height / 2, cell_width / 2);
+                mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2 - 1, ' ');
+                mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2 + 1, ' ');
                 wrefresh(winindex[row][col]);
+                move_cursor(row, --col);
             }
             break;
         case KEY_RIGHT:
             if (col < board_cols - 1)
             {
-                wmove(winindex[row][++col], cell_height / 2, cell_width / 2);
+                mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2 - 1, ' ');
+                mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2 + 1, ' ');
                 wrefresh(winindex[row][col]);
+                move_cursor(row, ++col);
             }
             break;
         case KEY_UP:
             if (row > 0)
             {
-                wmove(winindex[--row][col], cell_height / 2, cell_width / 2);
+                mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2 - 1, ' ');
+                mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2 + 1, ' ');
                 wrefresh(winindex[row][col]);
+                move_cursor(--row, col);
             }
             break;
         case KEY_DOWN:
             if (row < board_rows - 1)
             {
-                wmove(winindex[++row][col], cell_height / 2, cell_width / 2);
+                mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2 - 1, ' ');
+                mvwaddch(winindex[row][col], cell_height / 2, cell_width / 2 + 1, ' ');
                 wrefresh(winindex[row][col]);
+                move_cursor(++row, col);
             }
             break;
         }
@@ -149,7 +157,8 @@ void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30], 
 {
     steps++;
     stepped[row][col] = TRUE;
-    show_in_win(row, col, ' ', black_on_black);
+    werase(winindex[row][col]);
+    wrefresh(winindex[row][col]);
     for (int y = row - 1; y <= row + 1; y++)
         for (int x = col - 1; x <= col + 1; x++)
             if (valid_cell(y, x) == TRUE && stepped[y][x] == FALSE && marked[y][x] == FALSE)
@@ -161,7 +170,6 @@ void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30], 
                     stepped[y][x] = TRUE;
                     show_in_win(y, x, '0' + board_mines[y][x], green_on_black);
                 }
-    move_cursor(row, col);
 }
 void NEWCELL_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30], bool marked[][30], bool &mine_pressed, int &steps)
 {
@@ -205,6 +213,7 @@ int main()
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
+    curs_set(0);
     refresh();
 
     for (y=0; y < board_rows; y++)
@@ -249,13 +258,10 @@ int main()
                 if (marked[y][x] == FALSE && stepped[y][x] == FALSE)
                     NEWCELL_PRESSED(y, x, board_mines, stepped, marked, mine_pressed, steps);
                 else if (stepped[y][x] == TRUE  &&  num_markedneighb(y, x, marked) == board_mines[y][x])
-                {
                     for (int i = y-1; i <= y+1; i++)
                         for (int j = x-1; j <= x+1; j++)
                             if (marked[i][j] == FALSE && stepped[i][j] == FALSE && valid_cell(i, j) == TRUE)
                                 NEWCELL_PRESSED(i, j, board_mines, stepped, marked, mine_pressed, steps);
-                    move_cursor(y, x);
-                }
                 break;
             case 'x':
                 if (stepped[y][x] == FALSE)
@@ -282,12 +288,17 @@ int main()
                 endwin();
                 return 0;
         }
+        move_cursor(y, x);
     }
 
     mvwaddstr(status, 4, 1, "                            ");
     mvwaddstr(status, 5, 3, "Press any key besides 'q'");
     mvwaddstr(status, 6, 9, "to continue.");
     wrefresh(status);
+
+    mvwaddch(winindex[y][x], cell_height / 2, cell_width / 2 - 1, ' ');
+    mvwaddch(winindex[y][x], cell_height / 2, cell_width / 2 + 1, ' ');
+    wrefresh(winindex[y][x]);
 
     if (steps == (board_rows * board_cols) - total_mines) //WIN
     {
@@ -298,7 +309,6 @@ int main()
             for (int j = 0; j < board_cols; j++)
                 if (marked[i][j] == FALSE && board_mines[i][j] == -1)
                     show_in_win(i, j, 'x', color_markedcell);
-        move_cursor(y, x);
         ch = getch();
     }
 
@@ -316,7 +326,6 @@ int main()
                 else if (marked[i][j] == FALSE && board_mines[i][j] == -1)
                     show_in_win(i, j, '*', red_on_black);
 
-        curs_set(0);
         nodelay(stdscr, TRUE);
         while ((ch = getch()) == ERR)
         {
