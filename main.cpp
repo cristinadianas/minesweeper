@@ -213,6 +213,7 @@ int main()
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
+    nodelay(stdscr, TRUE);
     curs_set(0);
     refresh();
 
@@ -246,13 +247,21 @@ int main()
     mvwaddstr(status, 4, 6, "You've got this!");
     wrefresh(status);
 
+    clock_t startClock = clock();
+    WINDOW *timer = create_newwin(3, 15, 0, board_cols * cell_width + 15);
+
     move_cursor(0, 0); x = 0; y = 0;
 
     int ch;
     while (mine_pressed == FALSE && steps != (board_rows * board_cols) - total_mines)
     {
         while ((ch = getch()) != 'q' && ch != ' ' && ch != 'x')
-            UDRL(y, x, ch);
+        {
+            if (ch != ERR)
+                UDRL(y, x, ch);
+            mvwprintw(timer, 1, 2, "%d seconds", (clock() - startClock)/CLOCKS_PER_SEC);
+            wrefresh(timer);
+        }
         switch (ch) {
             case ' ':
                 if (marked[y][x] == FALSE && stepped[y][x] == FALSE)
@@ -309,7 +318,7 @@ int main()
             for (int j = 0; j < board_cols; j++)
                 if (marked[i][j] == FALSE && board_mines[i][j] == -1)
                     show_in_win(i, j, 'x', color_markedcell);
-        ch = getch();
+        while ((ch = getch()) == ERR);
     }
 
     else //LOSE
