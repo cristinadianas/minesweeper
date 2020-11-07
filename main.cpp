@@ -252,7 +252,7 @@ int main()
                 {
                     for (int i = y-1; i <= y+1; i++)
                         for (int j = x-1; j <= x+1; j++)
-                            if (marked[i][j] == FALSE && stepped[i][j] == FALSE)
+                            if (marked[i][j] == FALSE && stepped[i][j] == FALSE && valid_cell(i, j) == TRUE)
                                 NEWCELL_PRESSED(i, j, board_mines, stepped, marked, mine_pressed, steps);
                     move_cursor(y, x);
                 }
