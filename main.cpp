@@ -79,17 +79,6 @@ bool valid_cell(int row, int col)
         return TRUE;
     return FALSE;
 }
-void num_neighbours (int row, int col, int v[][xmax])
-{
-    if (v[row-1][col-1]!=-1) v[row-1][col-1]++;
-    if (v[row-1][col]!=-1) v[row-1][col]++;
-    if (v[row-1][col+1]!=-1) v[row-1][col+1]++;
-    if (v[row+1][col+1]!=-1) v[row+1][col+1]++;
-    if (v[row+1][col]!=-1) v[row+1][col]++;
-    if (v[row+1][col-1]!=-1) v[row+1][col-1]++;
-    if (v[row][col-1]!=-1) v[row][col-1]++;
-    if (v[row][col+1]!=-1) v[row][col+1]++;
-}
 
 WINDOW *create_newwin(int height, int width, int starty, int startx)
 {
@@ -219,7 +208,10 @@ int main()
             {
                 board_mines[y][x]=-1;
                 laid_mines++;
-                num_neighbours(y, x, board_mines);
+                for (int i = y - 1; i <= y + 1; i++)
+                    for (int j = x - 1; j <= x + 1; j++)
+                        if((i != y || j != x) && board_mines[i][j] != -1 && valid_cell(i, j) == TRUE)
+                            board_mines[i][j]++;
             }
 
     initscr();
