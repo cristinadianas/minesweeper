@@ -4,11 +4,20 @@
 #include <ncursesw/ncurses.h>
 using namespace std;
 
+#define ymax 16
+#define xmax 30
+
 unsigned int board_rows = 0, board_cols = 0, total_mines;
+WINDOW *winindex[ymax][xmax];
 
 #define cell_width 5
 #define cell_height 3
-WINDOW *winindex[30][30];
+#define counter_width 15
+#define counter_height 3
+#define timer_width 15
+#define timer_height 3
+#define status_width 30
+#define status_height 9
 
 #define color_default 0
 #define color_markedcell 1
@@ -21,6 +30,11 @@ void bsetup()
     int dif;
     cout<<"\n DIFFICULTY: \n 1 = Beginner (9x9 - 10 Mines)  \n 2 = Medium (16x16 - 40 Mines) \n 3 = Difficult (30x16 - 99 Mines) \n 4 = Custom (max: 30x16 - 480 Mines) \n \n";
     cin>>dif;
+    while (dif < 1 || dif > 4)
+    {
+        cout<<"Please enter a valid level of difficulty."<<endl;
+        cin>>dif;
+    }
     switch(dif) {
         case 1:
             board_cols=9;
@@ -42,12 +56,12 @@ void bsetup()
             do {
                 cout<<"WIDTH = ";
                 cin >> board_cols;
-            } while (board_cols < 1 || board_cols > 30);
+            } while (board_cols < 1 || board_cols > xmax);
 
             do {
                 cout<<"HEIGHT = ";
                 cin >> board_rows;
-            } while (board_rows < 1 || board_rows > 16);
+            } while (board_rows < 1 || board_rows > ymax);
 
             do {
                 cout<<"MINES = ";
@@ -63,7 +77,7 @@ bool valid_cell(int row, int col)
         return TRUE;
     return FALSE;
 }
-void num_neighbours (int row, int col, int v[][30])
+void num_neighbours (int row, int col, int v[][xmax])
 {
     if (v[row-1][col-1]!=-1) v[row-1][col-1]++;
     if (v[row-1][col]!=-1) v[row-1][col]++;
@@ -144,7 +158,7 @@ void sleep(float seconds)
     return;
 }
 
-int num_markedneighb(int row, int col, bool marked[][30])
+int num_markedneighb(int row, int col, bool marked[][xmax])
 {
     int neighbours = 0;
     for (int y = row - 1; y <= row + 1; y++)
@@ -153,7 +167,7 @@ int num_markedneighb(int row, int col, bool marked[][30])
                 neighbours++;
     return neighbours;
 }
-void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30], bool marked[][30], int &steps)
+void ZERO_PRESSED (int row, int col, int board_mines[][xmax], bool stepped[][xmax], bool marked[][xmax], int &steps)
 {
     steps++;
     stepped[row][col] = TRUE;
@@ -171,7 +185,7 @@ void ZERO_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30], 
                     show_in_win(y, x, '0' + board_mines[y][x], green_on_black);
                 }
 }
-void NEWCELL_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30], bool marked[][30], bool &mine_pressed, int &steps)
+void NEWCELL_PRESSED (int row, int col, int board_mines[][xmax], bool stepped[][xmax], bool marked[][xmax], bool &mine_pressed, int &steps)
 {
     switch (board_mines[row][col])
     {
@@ -192,12 +206,9 @@ void NEWCELL_PRESSED (int row, int col, int board_mines[][30], bool stepped[][30
 
 int main()
 {
-    int board_mines[30][30] = {0}, y, x, laid_mines = 0;
+    int board_mines[ymax][xmax] = {0}, y, x, laid_mines = 0;
     if (board_rows == 0)
-    {
         bsetup();
-        board_mines[30][30] = {0};
-    }
     srand (time(NULL));
 
     for (y=0; y < board_rows; y++)
@@ -237,18 +248,20 @@ int main()
     init_pair(red_on_black, COLOR_RED, COLOR_BLACK);
 
     int marked_cells = 0, steps = 0;
-    bool stepped[30][30] = {0}, marked[30][30] = {0}, mine_pressed = FALSE;
+    bool stepped[ymax][xmax] = {0}, marked[ymax][xmax] = {0}, mine_pressed = FALSE;
 
-    WINDOW *minesCounter = create_newwin(3, 15, 0, board_cols * cell_width);
-    mvwprintw(minesCounter, 1, 2, "%d/%d Mines ", marked_cells, total_mines);
-    wrefresh(minesCounter);
+    WINDOW *counter = create_newwin(counter_height, counter_width, 0, board_cols * cell_width);
+    mvwprintw(counter, 1, 2, "%d/%d Mines ", marked_cells, total_mines);
+    wrefresh(counter);
 
-    WINDOW *status = create_newwin(9, 30, 3, board_cols * cell_width);
-    mvwaddstr(status, 4, 6, "You've got this!");
+    WINDOW *status = create_newwin(status_height, status_width, counter_height, board_cols * cell_width);
+    mvwaddstr(status, 4, 7, "You've got this!");
     wrefresh(status);
 
     clock_t startClock = clock();
-    WINDOW *timer = create_newwin(3, 15, 0, board_cols * cell_width + 15);
+    WINDOW *timer = create_newwin(timer_height, timer_width, 0, board_cols * cell_width + counter_width);
+    mvwprintw(timer, 1, 2, "%d seconds", (clock() - startClock)/CLOCKS_PER_SEC);
+    wrefresh(timer);
 
     move_cursor(0, 0); x = 0; y = 0;
 
@@ -275,20 +288,20 @@ int main()
             case 'x':
                 if (stepped[y][x] == FALSE)
                     if (marked[y][x] == FALSE) {
-                        mvwprintw(minesCounter, 1, 2, "%d/%d Mines ", ++marked_cells, total_mines);
+                        mvwprintw(counter, 1, 2, "%d/%d Mines ", ++marked_cells, total_mines);
                         if (marked_cells - 1 == total_mines) {
-                            wbkgd(minesCounter, COLOR_PAIR(red_on_black));
+                            wbkgd(counter, COLOR_PAIR(red_on_black));
                             beep();
                         }
-                        wrefresh(minesCounter);
+                        wrefresh(counter);
                         show_in_win(y, x, 'x', color_markedcell);
                         marked[y][x] = TRUE;
                     }
                     else {
-                        mvwprintw(minesCounter, 1, 2, "%d/%d Mines ", --marked_cells, total_mines);
+                        mvwprintw(counter, 1, 2, "%d/%d Mines ", --marked_cells, total_mines);
                         if (marked_cells == total_mines)
-                            wbkgd(minesCounter, COLOR_PAIR(color_default));
-                        wrefresh(minesCounter);
+                            wbkgd(counter, COLOR_PAIR(color_default));
+                        wrefresh(counter);
                         show_in_win(y, x, ' ', color_default);
                         marked[y][x] = FALSE;
                     }
