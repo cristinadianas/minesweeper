@@ -18,12 +18,14 @@ WINDOW *winindex[ymax][xmax];
 #define timer_height 3
 #define status_width 30
 #define status_height 9
+#define distance_from_board 3
 
 #define color_default 0
 #define color_markedcell 1
 #define green_on_black 2
 #define black_on_black 3
 #define red_on_black 4
+#define magenta_on_black 5
 
 void bsetup()
 {
@@ -246,20 +248,21 @@ int main()
     init_pair(green_on_black, COLOR_GREEN, COLOR_BLACK);
     init_pair(black_on_black, COLOR_BLACK, COLOR_BLACK);
     init_pair(red_on_black, COLOR_RED, COLOR_BLACK);
+    init_pair(magenta_on_black, COLOR_MAGENTA, COLOR_BLACK);
 
     int marked_cells = 0, steps = 0;
     bool stepped[ymax][xmax] = {0}, marked[ymax][xmax] = {0}, mine_pressed = FALSE;
 
-    WINDOW *counter = create_newwin(counter_height, counter_width, 0, board_cols * cell_width);
+    WINDOW *counter = create_newwin(counter_height, counter_width, 0, board_cols * cell_width + distance_from_board);
     mvwprintw(counter, 1, 2, "%d/%d Mines ", marked_cells, total_mines);
     wrefresh(counter);
 
-    WINDOW *status = create_newwin(status_height, status_width, counter_height, board_cols * cell_width);
+    WINDOW *status = create_newwin(status_height, status_width, counter_height, board_cols * cell_width + distance_from_board);
     mvwaddstr(status, 4, 7, "You've got this!");
     wrefresh(status);
 
     clock_t startClock = clock();
-    WINDOW *timer = create_newwin(timer_height, timer_width, 0, board_cols * cell_width + counter_width);
+    WINDOW *timer = create_newwin(timer_height, timer_width, 0, board_cols * cell_width + counter_width + distance_from_board);
     mvwprintw(timer, 1, 2, "%d seconds", (clock() - startClock)/CLOCKS_PER_SEC);
     wrefresh(timer);
 
@@ -324,9 +327,14 @@ int main()
 
     if (steps == (board_rows * board_cols) - total_mines) //WIN
     {
-        mvwaddstr(status, 4, 11, "YOU WON");
+        mvwaddstr(status, 3, 11, "YOU WON");
         wbkgd(status, COLOR_PAIR(green_on_black));
         wrefresh(status);
+        wbkgd(counter, COLOR_PAIR(green_on_black));
+        wrefresh(counter);
+        wbkgd(timer, COLOR_PAIR(green_on_black));
+        wrefresh(timer);
+
         for (int i = 0; i < board_rows ; i++)
             for (int j = 0; j < board_cols; j++)
                 if (marked[i][j] == FALSE && board_mines[i][j] == -1)
@@ -337,14 +345,18 @@ int main()
     else //LOSE
     {
         flash();
-        mvwaddstr(status, 4, 10, "YOU LOST");
+        mvwaddstr(status, 3, 11, "YOU LOST");
         wbkgd(status, COLOR_PAIR(red_on_black));
         wrefresh(status);
+        wbkgd(counter, COLOR_PAIR(red_on_black));
+        wrefresh(counter);
+        wbkgd(timer, COLOR_PAIR(red_on_black));
+        wrefresh(timer);
 
         for (int i = 0; i < board_rows ; i++)
             for (int j = 0; j < board_cols; j++)
                 if (marked[i][j] == TRUE && board_mines[i][j] != -1)
-                    show_in_win(i, j, '-', color_markedcell);
+                    show_in_win(i, j, 'x', magenta_on_black);
                 else if (marked[i][j] == FALSE && board_mines[i][j] == -1)
                     show_in_win(i, j, '*', red_on_black);
 
