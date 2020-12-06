@@ -7,7 +7,7 @@ using namespace std;
 #define ymax 16
 #define xmax 30
 
-unsigned int board_rows = 0, board_cols = 0, total_mines;
+unsigned int board_rows, board_cols, total_mines;
 WINDOW *winindex[ymax][xmax];
 
 #define cell_width 5
@@ -197,9 +197,10 @@ void NEWCELL_PRESSED (int row, int col, int board_mines[][xmax], bool stepped[][
 
 int main()
 {
+    bsetup();
+    bool exit_requested = false;
+    do {
     int board_mines[ymax][xmax] = {0}, y, x, laid_mines = 0;
-    if (board_rows == 0)
-        bsetup();
     srand (time(NULL));
 
     for (y=0; y < board_rows; y++)
@@ -261,7 +262,7 @@ int main()
     move_cursor(0, 0); x = 0; y = 0;
 
     int ch;
-    while (mine_pressed == FALSE && steps != (board_rows * board_cols) - total_mines)
+    while (!exit_requested && mine_pressed == FALSE && steps != (board_rows * board_cols) - total_mines)
     {
         while ((ch = getch()) != 'q' && ch != ' ' && ch != 'x')
         {
@@ -302,8 +303,7 @@ int main()
                     }
                 break;
             case 'q':
-                endwin();
-                return 0;
+                exit_requested = true;
         }
         move_cursor(y, x);
     }
@@ -334,7 +334,7 @@ int main()
         while ((ch = getch()) == ERR);
     }
 
-    else //LOSE
+    else if (!exit_requested) //LOSE
     {
         flash();
         mvwaddstr(status, 3, 11, "YOU LOST");
@@ -375,13 +375,10 @@ int main()
     }
 
     if (ch == 'q')
-    {
-        endwin();
-        return 0;
-    }
+        exit_requested = true;
 
-    nodelay(stdscr, FALSE);
-    curs_set(1);
-    main();
+    } while (!exit_requested);
+    endwin();
+    return 0;
 }
 
