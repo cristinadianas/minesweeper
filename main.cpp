@@ -27,6 +27,8 @@ WINDOW *winindex[Y_MAX][X_MAX];
 #define RED_ON_BLACK 4
 #define MAGENTA_ON_BLACK 5
 
+#define KEY_ESC 27
+
 void board_setup()
 {
     int dif;
@@ -261,7 +263,7 @@ int main()
 
         int ch;
         while (!exit_requested && mine_pressed == FALSE && steps != (board_rows * board_cols) - total_mines) {
-            while ((ch = getch()) != 'q' && ch != ' ' && ch != 'x') {
+            while ((ch = getch()) != char(KEY_ESC) && ch != ' ' && ch != 'x') {
                 if (ch != ERR)
                     take_a_step(y, x, ch);
                 mvwprintw(timer, 1, 2, "%d seconds", (clock() - startClock) / CLOCKS_PER_SEC);
@@ -298,7 +300,7 @@ int main()
                         }
                     }
                     break;
-                case 'q':
+                case char(KEY_ESC):
                     exit_requested = true;
                     break;
             }
@@ -306,7 +308,7 @@ int main()
         }
 
         mvwaddstr(status, 4, 1, "                            ");
-        mvwaddstr(status, 5, 3, "Press any key besides 'q'");
+        mvwaddstr(status, 5, 3, "Press any key besides ESC");
         mvwaddstr(status, 6, 9, "to continue.");
         wrefresh(status);
 
@@ -363,7 +365,7 @@ int main()
                 sleep(0.1);
             }
         }
-        if (ch == 'q')
+        if (ch == char(KEY_ESC))
             exit_requested = true;
     } while (!exit_requested);
 
