@@ -207,7 +207,7 @@ int main()
 
         for (y = 0; y < board_rows; y++)
             for (x = 0; x < board_cols; x++)
-                if (total_mines - laid_mines != 0 && rand() < (RAND_MAX * (total_mines - laid_mines) / (board_rows * board_cols - (y * board_cols + x)))) {
+                if (total_mines - laid_mines != 0 && double(rand()) / RAND_MAX < double((total_mines - laid_mines)) / (board_rows * board_cols - (y * board_cols + x))) {
                     board_mines[y][x] = -1;
                     laid_mines++;
                     for (int i = y - 1; i <= y + 1; i++)
