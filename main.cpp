@@ -320,6 +320,7 @@ int main()
             mvwaddstr(status, 3, 11, "YOU WON");
             wbkgd(status, COLOR_PAIR(GREEN_ON_BLACK));
             wrefresh(status);
+            mvwprintw(counter, 1, 2, "%d/%d Mines ", total_mines, total_mines);
             wbkgd(counter, COLOR_PAIR(GREEN_ON_BLACK));
             wrefresh(counter);
             wbkgd(timer, COLOR_PAIR(GREEN_ON_BLACK));
@@ -342,10 +343,15 @@ int main()
 
             for (int i = 0; i < board_rows; i++)
                 for (int j = 0; j < board_cols; j++)
-                    if (marked[i][j] == TRUE && board_mines[i][j] != -1)
+                    if (marked[i][j] == TRUE && board_mines[i][j] != -1) {
+                        marked_cells--;
                         show_in_window(i, j, 'x', MAGENTA_ON_BLACK);
+                    }
                     else if (marked[i][j] == FALSE && board_mines[i][j] == -1)
                         show_in_window(i, j, '*', RED_ON_BLACK);
+
+            mvwprintw(counter, 1, 2, "%d/%d Mines ", marked_cells, total_mines);
+            wrefresh(counter);
 
             nodelay(stdscr, TRUE);
             while ((ch = getch()) == ERR) {
